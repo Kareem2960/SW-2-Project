@@ -16,10 +16,10 @@ import { FaRegUser } from "react-icons/fa";
 import { IoIosNotificationsOutline } from "react-icons/io";
 import { LogOut } from "lucide-react";
 
-const ManagerNavbar = ({ managerName = "Sarah" }) => {
+const ManagerNavbar = () => {
   const navigate = useNavigate();
   const { isDarkMode } = useTheme();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const handleLogout = () => {
     logout();
@@ -37,7 +37,7 @@ const ManagerNavbar = ({ managerName = "Sarah" }) => {
       <h1
         className={`text-sm font-medium md:text-base ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}
       >
-        Welcome back, {managerName}!
+        Welcome back, {user?.email || user?.name || 'User'}!
       </h1>
 
       <div className="flex items-center gap-2 md:gap-3">

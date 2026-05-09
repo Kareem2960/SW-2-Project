@@ -7,6 +7,7 @@ import OpenDrawerBtn from "../Buttons/OpenDrawerBtn";
 import Logo from "../Logo/Logo";
 import DarkModeBtn from "../Buttons/DarkModeBtn";
 import { useTheme } from "../../Context/DarkModeProvider";
+import { useAuth } from "../../Context/AuthContext";
 
 // ==================== Icons ====================
 import { FaRegUser } from "react-icons/fa";
@@ -22,6 +23,7 @@ const Nav = () => {
   const location = useLocation();
   const isAdmin = location.pathname.includes("/admin");
   const { isDarkMode } = useTheme();
+  const { user } = useAuth();
 
   // Admin navbar - dark background
   if (isAdmin) {
@@ -135,7 +137,7 @@ const Nav = () => {
                 fontWeight: 600,
               }}
             >
-              Sarah Jenkins
+              {user?.email || user?.name || 'User'}
             </Text>
             <Text style={{ fontSize: "12px", color: isDarkMode ? "#94a3b8" : "#6b7280" }}>
               Project Manager
