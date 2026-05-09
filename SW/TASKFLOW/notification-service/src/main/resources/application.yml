@@ -1,0 +1,36 @@
+server:
+  port: 8084
+  address: 0.0.0.0
+
+spring:
+  application:
+    name: notification-service
+  datasource:
+    url: jdbc:sqlserver://localhost:1433;databaseName=TaskFlow_Notification;encrypt=false;trustServerCertificate=true
+    username: sa
+    password: YourStrong@Password123
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.SQLServerDialect
+        format_sql: true
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: notification-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+jwt:
+  secret: mySecretKey12345678901234567890123456789012
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html

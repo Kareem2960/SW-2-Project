@@ -1,0 +1,162 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: taskflow-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: taskflow_auth
+    ports:
+      - "13306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+    networks:
+      - taskflow-network
+
+  # SQL Server Database
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: taskflow-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "YourStrong@Password123"
+      MSSQL_PID: "Express"
+      MSSQL_COLLATION: "SQL_Latin1_General_CP1_CI_AS"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+      - ./docker/sqlserver/init:/docker-entrypoint-initdb.d
+    networks:
+      - taskflow-network
+
+  # Zookeeper for Kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: taskflow-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - taskflow-network
+
+  # Kafka Broker
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: taskflow-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "19092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - taskflow-network
+
+  # Auth Service
+  auth-service:
+    build:
+      context: .
+      dockerfile: ./auth-service/Dockerfile
+    container_name: taskflow-auth-service
+    depends_on:
+      - sqlserver
+      - kafka
+    ports:
+      - "18081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:sqlserver://sqlserver:1433;databaseName=TaskFlow;encrypt=false;trustServerCertificate=true
+      SPRING_DATASOURCE_USERNAME: sa
+      SPRING_DATASOURCE_PASSWORD: YourStrong@Password123
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    networks:
+      - taskflow-network
+
+  # Project Service
+  project-service:
+    build:
+      context: .
+      dockerfile: ./project-service/Dockerfile
+    container_name: taskflow-project-service
+    depends_on:
+      - sqlserver
+      - kafka
+    ports:
+      - "18082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:sqlserver://sqlserver:1433;databaseName=TaskFlow_Project;encrypt=false;trustServerCertificate=true
+      SPRING_DATASOURCE_USERNAME: sa
+      SPRING_DATASOURCE_PASSWORD: YourStrong@Password123
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    networks:
+      - taskflow-network
+
+  # Task Service
+  task-service:
+    build:
+      context: .
+      dockerfile: ./task-service/Dockerfile
+    container_name: taskflow-task-service
+    depends_on:
+      - sqlserver
+      - kafka
+    ports:
+      - "18083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:sqlserver://sqlserver:1433;databaseName=TaskFlow_Task;encrypt=false;trustServerCertificate=true
+      SPRING_DATASOURCE_USERNAME: sa
+      SPRING_DATASOURCE_PASSWORD: YourStrong@Password123
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    networks:
+      - taskflow-network
+
+  # Notification Service
+  notification-service:
+    build:
+      context: .
+      dockerfile: ./notification-service/Dockerfile
+    container_name: taskflow-notification-service
+    depends_on:
+      - sqlserver
+      - kafka
+    ports:
+      - "18084:8084"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:sqlserver://sqlserver:1433;databaseName=TaskFlow_Notification;encrypt=false;trustServerCertificate=true
+      SPRING_DATASOURCE_USERNAME: sa
+      SPRING_DATASOURCE_PASSWORD: YourStrong@Password123
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    networks:
+      - taskflow-network
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: .
+      dockerfile: ./api-gateway/Dockerfile
+    container_name: taskflow-api-gateway
+    depends_on:
+      - auth-service
+      - project-service
+      - task-service
+      - notification-service
+    ports:
+      - "18080:8080"
+    networks:
+      - taskflow-network
+
+volumes:
+  mysql-data:
+  sqlserver-data:
+
+networks:
+  taskflow-network:
+    driver: bridge

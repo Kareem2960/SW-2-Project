@@ -1,0 +1,8 @@
+{
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.import.maven.enabled": true,
+    "java.project.importOnFirstTimeStartup": "automatic",
+    "maven.pomfile.autoUpdateActiveProfiles": true,
+    "maven.terminal.useJavaHome": true
+}

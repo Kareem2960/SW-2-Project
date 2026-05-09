@@ -1,0 +1,43 @@
+server:
+  port: 8082
+  address: 0.0.0.0
+
+spring:
+  application:
+    name: project-service
+  datasource:
+    url: jdbc:sqlserver://localhost:1433;databaseName=TaskFlow_Project;encrypt=false;trustServerCertificate=true
+    username: sa
+    password: YourStrong@Password123
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.SQLServerDialect
+        format_sql: true
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: project-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+jwt:
+  secret: mySecretKey12345678901234567890123456789012
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+# Demo project when DB empty (assuming auth users ids: admin 1, manager 2, user 3)
+taskflow:
+  demo:
+    seed-enabled: true
+    manager-user-id: 2
+    member-user-id: 3
